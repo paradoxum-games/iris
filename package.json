@@ -1,0 +1,15 @@
+{
+  "name": "@paradoxum-games/iris",
+  "version": "2.2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paradoxum-games/iris.git"
+  },
+  "contributors": [
+    "elttob"
+  ],
+  "bugs": {
+    "url": "https://github.com/paradoxum-games/iris/issues"
+  }
+}
