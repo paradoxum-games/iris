@@ -10,202 +10,356 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
         end
     end)
 
-    local function convertToValue(value: string)
-        if value == "true" then
-            return true
-        elseif value == "false" then
-            return false
-        elseif tonumber(value) then
-            return tonumber(value)
-        elseif value:gsub("%s", "") == "" then
-            return nil
-        else
-            return value
-        end
-    end
-
-    local function convertFromValue(value: any)
-        if value == nil then
-            return ""
-        else
-            return tostring(value)
-        end
-    end
-
-    --stylua: ignore
-    Iris.WidgetConstructor("EditableTable", {
-        hasState = true,
-        hasChildren = false,
-
-        Args = {
-            ["Table"] = 1,
-        },
-        
-        Events = {
-            ["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
-                return thisWidget.Instance
-            end),  
-        },
-        Generate = function(thisWidget: Types.Widget)
-            tableWidgets[thisWidget.ID] = thisWidget
-
-            local Table: Frame = Instance.new("Frame")
-            Table.Name = "Iris_EditableTable"
-            Table.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
-            Table.AutomaticSize = Enum.AutomaticSize.Y
-            Table.BackgroundTransparency = 1
-            Table.BorderSizePixel = 0
-            Table.ZIndex = thisWidget.ZIndex + 1024 -- allocate room for 1024 cells, because Table UIStroke has to appear above cell UIStroke
-            Table.LayoutOrder = thisWidget.ZIndex
-            Table.ClipsDescendants = true
-
-            widgets.UIListLayout(Table, Enum.FillDirection.Vertical, UDim.new(0, 0))
-            widgets.UIStroke(Table, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
-
-            return Table
-        end,
-        Update = function(thisWidget: Types.Widget)
-            
-        end,
-        Discard = function(thisWidget: Types.Widget)
-            tableWidgets[thisWidget.ID] = nil
-            thisWidget.Instance:Destroy()
-        end,
-        GenerateState = function(thisWidget: Types.Widget)
-            if thisWidget.state.table == nil then
-                thisWidget.state.table = Iris._widgetState(thisWidget, "table", {})
+    -- Editable Table Widget
+    do
+        local function convertToValue(value: string)
+            if value == "true" then
+                return true
+            elseif value == "false" then
+                return false
+            elseif tonumber(value) then
+                return tonumber(value)
+            elseif value:gsub("%s", "") == "" then
+                return nil
+            else
+                return value
             end
-        end,
-        UpdateState = function(thisWidget: Types.Widget)
+        end
 
-            local refreshState
+        local function convertFromValue(value: any)
+            if value == nil then
+                return ""
+            else
+                return tostring(value)
+            end
+        end
 
-            refreshState = function()
-                local existing = {}
-                local currentTable = thisWidget.state.table:get() or {}
-    
-                for _, child: Types.Widget in thisWidget.Instance:GetChildren() do
-                    if child:IsA("Frame") then
-                        if currentTable[child.Name] == nil then
-                            child:Destroy()
+        local function createTableEntry(thisWidget: Types.Widget, name: string)
+            local entry = Instance.new("TextButton")
+            entry.Text = ""
+            entry.Name = name
+            entry.Size = UDim2.new(1, 0, 0, 0)
+            entry.AutomaticSize = Enum.AutomaticSize.Y
+            entry.BackgroundTransparency = 1
+            entry.BorderSizePixel = 0
+            entry.BackgroundColor3 = Iris._config.FrameBgColor
+            entry.BackgroundTransparency = Iris._config.FrameBgTransparency
+            entry.ZIndex = thisWidget.ZIndex + 1
+            entry:SetAttribute("Table", true)
+
+            local arrow = Instance.new("ImageLabel")
+            arrow.Name = "Arrow"
+            arrow.Size = UDim2.fromOffset(Iris._config.TextSize, math.ceil(Iris._config.TextSize * 0.8))
+            arrow.AutomaticSize = Enum.AutomaticSize.Y
+            arrow.BackgroundTransparency = 1
+            arrow.BorderSizePixel = 0
+            arrow.Position = UDim2.fromScale(0, 0.5)
+            arrow.AnchorPoint = Vector2.new(0, 0.5)
+            arrow.ImageColor3 = Iris._config.TextColor
+            arrow.ImageTransparency = Iris._config.TextTransparency
+            arrow.ScaleType = Enum.ScaleType.Fit
+            arrow.ZIndex = thisWidget.ZIndex
+            arrow.LayoutOrder = 0
+            arrow.Parent = entry
+
+            local key = Instance.new("TextLabel")
+            key.Name = "Key"
+            key.Size = UDim2.new(1, -Iris._config.TextSize, 0, 0)
+            key.Position = UDim2.new(0, Iris._config.TextSize, 0, 0)
+            key.AutomaticSize = Enum.AutomaticSize.Y
+            key.BackgroundTransparency = 1
+            key.BorderSizePixel = 0
+            key.ZIndex = thisWidget.ZIndex + 2
+            key.LayoutOrder = 1
+            key.ClipsDescendants = true
+            key.Parent = entry
+
+            local padding = Instance.new("UIPadding")
+            padding.Parent = entry
+
+            widgets.UISizeConstraint(arrow, Vector2.new(1, 0))
+            widgets.UISizeConstraint(key, Vector2.new(1, 0))
+
+            widgets.applyTextStyle(key)
+
+            widgets.applyFrameStyle(key)
+            widgets.applyFrameStyle(arrow)
+
+            entry.Parent = thisWidget.Instance
+
+            return entry, key, arrow
+        end
+
+        local function createInputEntry(thisWidget: Types.Widget, name: string)
+            local entry = Instance.new("Frame")
+            entry.Name = name
+            entry.Size = UDim2.new(1, 0, 0, 0)
+            entry.AutomaticSize = Enum.AutomaticSize.Y
+            entry.BackgroundColor3 = Iris._config.FrameBgColor
+            entry.BackgroundTransparency = Iris._config.FrameBgTransparency
+            entry.BorderSizePixel = 0
+            entry.ZIndex = thisWidget.ZIndex + 1
+
+            local key = Instance.new("TextLabel")
+            key.Name = "Key"
+            key.Size = UDim2.new(0.5, 0, 0, 0)
+            key.AutomaticSize = Enum.AutomaticSize.Y
+            key.BackgroundTransparency = 1
+            key.BorderSizePixel = 0
+            key.ZIndex = thisWidget.ZIndex + 2
+            key.LayoutOrder = 2
+            key.ClipsDescendants = true
+            key.Parent = entry
+
+            local value = Instance.new("TextBox")
+            value.Name = "Value"
+            value.Size = UDim2.new(0.5, 0, 0, 0)
+            value.AutomaticSize = Enum.AutomaticSize.Y
+            value.BackgroundColor3 = Iris._config.FrameBgColor
+            value.BackgroundTransparency = 1
+            value.BorderSizePixel = 0
+            value.ZIndex = thisWidget.ZIndex + 2
+            value.LayoutOrder = 2
+            value.ClipsDescendants = true
+            value.Parent = entry
+
+            local seperator = Instance.new("Frame")
+            seperator.Name = "Seperator"
+            seperator.Size = UDim2.new(0, 1, 2, 0)
+            seperator.Position = UDim2.new(1, 1, 0.5, 0)
+            seperator.AnchorPoint = Vector2.new(0, 0.5)
+            seperator.BackgroundColor3 = Iris._config.SeparatorColor
+            seperator.BackgroundTransparency = Iris._config.SeparatorTransparency
+            seperator.BorderSizePixel = 0
+            seperator.ZIndex = thisWidget.ZIndex + 2
+            seperator.LayoutOrder = 1
+            seperator.Parent = key
+
+            local padding = Instance.new("UIPadding")
+            padding.Parent = entry
+
+            widgets.UIListLayout(entry, Enum.FillDirection.Horizontal, UDim.new(0, 0))
+            widgets.UIStroke(entry, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+
+            widgets.applyTextStyle(key)
+            widgets.applyTextStyle(value)
+
+            widgets.applyFrameStyle(key)
+            widgets.applyFrameStyle(value)
+
+            widgets.UISizeConstraint(key, Vector2.new(1, 0))
+            widgets.UISizeConstraint(value, Vector2.new(1, 0))
+
+            entry.Parent = thisWidget.Instance
+
+            return entry, key, value
+        end
+
+        type TableChild = { key: string, depth: number, parent: any?, value: any }
+        local function getTableDescendants(tbl: { [number | string]: any }, parent: TableChild?)
+            local nodes = {} :: { TableChild }
+            local entries = {} :: { { key: string, value: any } }
+
+            for key, value in pairs(tbl) do
+                table.insert(entries, { key = key, value = value })
+            end
+
+            table.sort(entries, function(a, b)
+                return a.key < b.key
+            end)
+
+            for _, entry in entries do
+                local key = entry.key
+                local value = entry.value
+
+                local node = {
+                    key = key,
+                    value = value,
+                    depth = parent and parent.depth + 1 or 0,
+                    path = parent and `{parent.path}\1{key}` or key,
+                    parent = parent,
+                } :: TableChild
+
+                table.insert(nodes, node)
+
+                if type(value) == "table" then
+                    for _, descNode in getTableDescendants(value, node) do
+                        table.insert(nodes, descNode)
+                    end
+                end
+            end
+
+            return nodes
+        end
+
+        local function refreshTableState(thisWidget: Types.Widget)
+            local expanded = thisWidget.state.expanded:get() or {}
+            local state = thisWidget.state.table:get() or {}
+
+            local existing = {} :: { [string]: any }
+            local descendants = getTableDescendants(state)
+
+            for _, child: Types.Widget in thisWidget.Instance:GetChildren() do
+                if child:IsA("Frame") or child:IsA("TextButton") then
+                    existing[child.Name] = child
+                end
+            end
+
+            for index, entry in ipairs(descendants) do
+                local frame: Frame
+                local input: TextBox
+
+                local entryType = typeof(entry.value)
+                local entryPadding = 4 + (entry.depth * 16)
+                local existingChild = existing[entry.path]
+
+                local isExpanded = not entry.parent or (expanded[entry.parent.path] and existing[entry.parent.path].Visible)
+                local isTable = entryType == "table"
+
+                if existingChild then
+                    if isTable then
+                        if not existingChild:GetAttribute("Table") then
+                            existingChild:Destroy()
+                            existingChild = nil
                         else
-                            existing[child.Name] = child
+                            frame = existingChild
                         end
+                    else
+                        frame = existingChild
+                        input = frame:FindFirstChild("Value")
                     end
                 end
-    
-                local index = 1
-                for name, obj in currentTable do
-                    local frame: Frame
-                    local input: TextBox
 
-                    -- local canExpand = type(obj) == "table"
+                if not existingChild then
+                    local key
 
-    
-                    if existing[name] ~= nil then
-                        frame = existing[name]
-                        frame.LayoutOrder = index
-                        input = frame.Value
+                    if isTable then
+                        frame, key = createTableEntry(thisWidget, entry.path)
+                        frame.Arrow.Image = if expanded[frame.Name] then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
+
+                        frame.MouseButton1Click:Connect(function()
+                            local expanded = thisWidget.state.expanded:get() or {}
+                            local didExpand = not expanded[frame.Name]
+
+                            expanded[frame.Name] = didExpand
+                            frame.Arrow.Image = if didExpand then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
+
+                            thisWidget.state.expanded:set(expanded)
+                            refreshTableState(thisWidget)
+                        end)
                     else
-                        local newObject = Instance.new("Frame")
-                        newObject.Name = name
-                        newObject.Size = UDim2.new(1, 0, 0, 0)
-                        newObject.AutomaticSize = Enum.AutomaticSize.Y
-                        newObject.BackgroundTransparency = 1
-                        newObject.BorderSizePixel = 0
-                        newObject.ZIndex = thisWidget.ZIndex + 1
-                        newObject.LayoutOrder = index
-    
-                        widgets.UIListLayout(newObject, Enum.FillDirection.Horizontal, UDim.new(0, 0))
-                        widgets.UIStroke(newObject, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
-    
-                        local nameInput = Instance.new("TextBox")
-                        nameInput.Name = "Name"
-                        nameInput.Size = UDim2.new(0.5, 0, 0, 0)
-                        nameInput.AutomaticSize = Enum.AutomaticSize.Y
-                        nameInput.BackgroundColor3 = Iris._config.FrameBgColor
-                        nameInput.BackgroundTransparency = Iris._config.FrameBgTransparency
-                        nameInput.BorderSizePixel = 0
-                        nameInput.ZIndex = thisWidget.ZIndex + 2
-                        nameInput.LayoutOrder = 2
-                        nameInput.ClipsDescendants = true
-                        nameInput.Text = tostring(name)
-                        nameInput.Parent = newObject
-    
-                        local seperator = Instance.new("Frame")
-                        seperator.Name = "Seperator"
-                        seperator.Size = UDim2.new(0, 1, 2, 0)
-                        seperator.Position = UDim2.new(1, 1, 0.5, 0)
-                        seperator.AnchorPoint = Vector2.new(0, 0.5)
-                        seperator.BackgroundColor3 = Iris._config.SeparatorColor
-                        seperator.BackgroundTransparency = Iris._config.SeparatorTransparency
-                        seperator.BorderSizePixel = 0
-                        seperator.ZIndex = thisWidget.ZIndex + 2
-                        seperator.LayoutOrder = 1
-                        seperator.Parent = nameInput
-    
-                        local valueInput = Instance.new("TextBox")
-                        valueInput.Name = "Value"
-                        valueInput.Size = UDim2.new(0.5, 0, 0, 0)
-                        valueInput.AutomaticSize = Enum.AutomaticSize.Y
-                        valueInput.BackgroundColor3 = Iris._config.FrameBgColor
-                        valueInput.BackgroundTransparency = Iris._config.FrameBgTransparency
-                        valueInput.BorderSizePixel = 0
-                        valueInput.ZIndex = thisWidget.ZIndex + 2
-                        valueInput.LayoutOrder = 2
-                        valueInput.ClipsDescendants = true
-                        valueInput.Parent = newObject
-    
-                        nameInput.FocusLost:Connect(function()
-                            local tableValue = thisWidget.state.table:get()
-                            local value = convertToValue(nameInput.Text)
-    
+                        frame, key, input = createInputEntry(thisWidget, entry.path)
+                        input.FocusLost:Connect(function()
+                            local state = thisWidget.state.table:get() or {}
+                            local value = convertToValue(input.Text)
+
                             if value == nil then
-                                tableValue[newObject.Name] = nil
+                                input.Text = convertFromValue(entry.value)
+                                return
                             else
-                                local current = tableValue[newObject.Name]
-                                tableValue[newObject.Name] = nil
-                                tableValue[value] = current
-                                newObject.Name = value
+                                local path = string.split(frame.Name, "\1")
+                                local current = state
+
+                                for i = 1, #path - 1 do
+                                    current = current[path[i]]
+                                end
+
+                                current[path[#path]] = value
                             end
-    
-                            thisWidget.state.table:set(tableValue)
-                            refreshState()
-                        end)
-    
-                        valueInput.FocusLost:Connect(function()
-                            local value = convertToValue(valueInput.Text)
-                            local tableValue = thisWidget.state.table:get()
 
-                            tableValue[newObject.Name] = value
-                            thisWidget.state.table:set(tableValue)
+                            thisWidget.state.table:set(state)
+                            thisWidget.lastTableChangedTick = Iris._cycleTick + 1
 
-                            refreshState()
+                            refreshTableState(thisWidget)
                         end)
-    
-                        widgets.applyTextStyle(nameInput)
-                        widgets.applyTextStyle(valueInput)
-    
-                        widgets.applyFrameStyle(nameInput)
-                        widgets.applyFrameStyle(valueInput)
-    
-                        widgets.UISizeConstraint(nameInput, Vector2.new(1, 0))
-                        widgets.UISizeConstraint(valueInput, Vector2.new(1, 0))
-    
-                        newObject.Parent = thisWidget.Instance
-    
-                        input = valueInput
-                        frame = newObject
                     end
-    
-                    frame.BackgroundTransparency = if index % 2 == 0 then Iris._config.TableRowBgAltTransparency else Iris._config.TableRowBgTransparency
-                    input.Text = convertFromValue(obj)
+
+                    key.Text = convertFromValue(entry.key)
+                end
+
+                frame.LayoutOrder = index
+
+                if entry.parent then
+                    frame.Visible = isExpanded
+
+                    if not frame.Visible then
+                        continue
+                    end
+                end
+
+                if not isTable then
+                    entryPadding += 16
+                    frame.Key.Size = UDim2.new(0.5, -entryPadding / 2, 0, 0)
+                    frame.Value.Size = UDim2.new(0.5, entryPadding / 2, 0, 0)
+                    frame.UIPadding.PaddingLeft = UDim.new(0, entryPadding)
+                else
+                    frame.UIPadding.PaddingLeft = UDim.new(0, entryPadding)
+                end
+
+                if input then
+                    input.Text = convertFromValue(entry.value)
                 end
             end
+        end
+    
+        --stylua: ignore
+        Iris.WidgetConstructor("EditableTable", {
+            hasState = true,
+            hasChildren = false,
+    
+            Args = {
+                ["Table"] = 1,
+            },
+            
+            Events = {
+                ["tableChanged"] = {
+                    ["Init"] = function(_thisWidget: Types.Widget) end,
+                    ["Get"] = function(thisWidget: Types.Widget)
+                        return thisWidget.lastTableChangedTick == Iris._cycleTick
+                    end,
+                },
 
-            refreshState()
-        end,
-    } :: Types.WidgetClass )
+                ["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+                    return thisWidget.Instance
+                end), 
+            },
+            Generate = function(thisWidget: Types.Widget)
+                tableWidgets[thisWidget.ID] = thisWidget
+    
+                local Table: Frame = Instance.new("Frame")
+                Table.Name = "Iris_EditableTable"
+                Table.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
+                Table.AutomaticSize = Enum.AutomaticSize.Y
+                Table.BackgroundTransparency = 1
+                Table.BorderSizePixel = 0
+                Table.ZIndex = thisWidget.ZIndex + 1024 -- allocate room for 1024 cells, because Table UIStroke has to appear above cell UIStroke
+                Table.LayoutOrder = thisWidget.ZIndex
+                Table.ClipsDescendants = true
+    
+                widgets.UIListLayout(Table, Enum.FillDirection.Vertical, UDim.new(0, 0))
+                widgets.UIStroke(Table, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+    
+                return Table
+            end,
+            Update = function(thisWidget: Types.Widget)
+            end,
+            Discard = function(thisWidget: Types.Widget)
+                tableWidgets[thisWidget.ID] = nil
+                thisWidget.Instance:Destroy()
+            end,
+            GenerateState = function(thisWidget: Types.Widget)
+                thisWidget.state.expanded = Iris._widgetState(thisWidget, "expanded", {})
+
+                if thisWidget.state.table == nil then
+                    thisWidget.state.table = Iris._widgetState(thisWidget, "table", {})
+                end
+            end,
+            UpdateState = function(thisWidget: Types.Widget)
+                refreshTableState(thisWidget)
+            end,
+        } :: Types.WidgetClass )
+    end
+
 
     --stylua: ignore
     Iris.WidgetConstructor("Table", {

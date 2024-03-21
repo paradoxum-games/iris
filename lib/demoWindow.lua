@@ -23,29 +23,6 @@ return function(Iris: Types.Iris)
 
     -- shows each widgets functionality
     local widgetDemos = {
-        EditableTable = function()
-            Iris.Tree({ "EditableTable" })
-
-                local state = Iris.State({
-                    Test1 = 1,
-                    Test2 = "2",
-                    Test3 = {},
-                    Test4 = true,
-                })
-
-                state:onChange(function(value)
-                    print("updated", value)
-                end)
-
-                print(state.value)
-
-                Iris.EditableTable({}, {
-                    table = state
-                })
-
-            Iris.End()
-        end,
-
         Basic = function()
             Iris.Tree({ "Basic" })
                 Iris.SeparatorText({ "Basic" })
@@ -363,8 +340,7 @@ return function(Iris: Types.Iris)
             Iris.End()
         end,
     }
-    -- local widgetDemosOrder = { "EditableTable",  "Basic", "Tree", "CollapsingHeader", "Group", "Indent", "Input", "MultiInput", "InputText", "Tooltip", "Selectable", "Combo", "Plotting"}
-    local widgetDemosOrder = { "EditableTable" }
+    local widgetDemosOrder = { "Basic", "Tree", "CollapsingHeader", "Group", "Indent", "Input", "MultiInput", "InputText", "Tooltip", "Selectable", "Combo", "Plotting"}
     
     local function recursiveTree()
         local theTree = Iris.Tree({ "Recursive Tree" })
@@ -848,77 +824,100 @@ return function(Iris: Types.Iris)
             -- Dear ImGui utilizes the same trick, but its less useful here because the Retained mode Backend
             Iris.End()
         else
-            Iris.SameLine()
-            Iris.Text({ "Table using NextRow and NextColumn syntax:" })
-            helpMarker("calling Iris.NextRow() in the outer loop, and Iris.NextColumn()in the inner loop")
-            Iris.End()
-            Iris.Table({ 3 })
-            for i = 1, 4 do
-                Iris.NextRow()
-                for i2 = 1, 3 do
-                    Iris.NextColumn()
-                    Iris.Text({ `Row: {i}, Column: {i2}` })
+            Iris.Tree({ "EditableTable" })
+                local state = Iris.State({
+                    Test1 = {
+                        Test2 = true,
+                        Test3 = false,
+                        Test4 = {
+                            Test5 = 1
+                        }
+                    },
+
+                    Test6 = 2,
+                })
+
+                if Iris.EditableTable({}, {
+                    table = state
+                }).tableChanged() then
+                    print("updated", state:get())
                 end
-            end
             Iris.End()
 
-            Iris.Text({ "" })
+            Iris.Tree({ "Tables" })
 
-            Iris.SameLine()
-            Iris.Text({ "Table using NextColumn only syntax:" })
-            helpMarker("only calling Iris.NextColumn() in the inner loop, the result is identical")
-            Iris.End()
-
-            Iris.Table({ 2 })
-            for i = 1, 4 do
-                for i2 = 1, 2 do
-                    Iris.NextColumn()
-                    Iris.Text({ `Row: {i}, Column: {i2}` })
-                end
-            end
-            Iris.End()
-
-            Iris.Separator()
-
-            local TableRowBg = Iris.State(false)
-            local TableBordersOuter = Iris.State(false)
-            local TableBordersInner = Iris.State(true)
-            local TableUseButtons = Iris.State(true)
-            local TableNumRows = Iris.State(3)
-
-            Iris.Text({ "Table with Customizable Arguments" })
-            Iris.Table({
-                4,
-                [Iris.Args.Table.RowBg] = TableRowBg.value,
-                [Iris.Args.Table.BordersOuter] = TableBordersOuter.value,
-                [Iris.Args.Table.BordersInner] = TableBordersInner.value,
-            })
-            for i = 1, TableNumRows:get() do
-                for i2 = 1, 4 do
-                    Iris.NextColumn()
-                    if TableUseButtons.value then
-                        Iris.Button({ `Month: {i}, Week: {i2}` })
-                    else
-                        Iris.Text({ `Month: {i}, Week: {i2}` })
+                Iris.SameLine()
+                Iris.Text({ "Table using NextRow and NextColumn syntax:" })
+                helpMarker("calling Iris.NextRow() in the outer loop, and Iris.NextColumn()in the inner loop")
+                Iris.End()
+                Iris.Table({ 3 })
+                for i = 1, 4 do
+                    Iris.NextRow()
+                    for i2 = 1, 3 do
+                        Iris.NextColumn()
+                        Iris.Text({ `Row: {i}, Column: {i2}` })
                     end
                 end
-            end
-            Iris.End()
+                Iris.End()
 
-            Iris.Checkbox({ "RowBg" }, { isChecked = TableRowBg })
-            Iris.Checkbox({ "BordersOuter" }, { isChecked = TableBordersOuter })
-            Iris.Checkbox({ "BordersInner" }, { isChecked = TableBordersInner })
-            Iris.SameLine()
-            Iris.RadioButton({ "Buttons", true }, { index = TableUseButtons })
-            Iris.RadioButton({ "Text", false }, { index = TableUseButtons })
-            Iris.End()
-            Iris.InputNum({
-                "Number of rows",
-                [Iris.Args.InputNum.Min] = 0,
-                [Iris.Args.InputNum.Max] = 100,
-                [Iris.Args.InputNum.Format] = "%d",
-            }, { number = TableNumRows })
+                Iris.Text({ "" })
 
+                Iris.SameLine()
+                Iris.Text({ "Table using NextColumn only syntax:" })
+                helpMarker("only calling Iris.NextColumn() in the inner loop, the result is identical")
+                Iris.End()
+
+                Iris.Table({ 2 })
+                for i = 1, 4 do
+                    for i2 = 1, 2 do
+                        Iris.NextColumn()
+                        Iris.Text({ `Row: {i}, Column: {i2}` })
+                    end
+                end
+                Iris.End()
+
+                Iris.Separator()
+
+                local TableRowBg = Iris.State(false)
+                local TableBordersOuter = Iris.State(false)
+                local TableBordersInner = Iris.State(true)
+                local TableUseButtons = Iris.State(true)
+                local TableNumRows = Iris.State(3)
+
+                Iris.Text({ "Table with Customizable Arguments" })
+                Iris.Table({
+                    4,
+                    [Iris.Args.Table.RowBg] = TableRowBg.value,
+                    [Iris.Args.Table.BordersOuter] = TableBordersOuter.value,
+                    [Iris.Args.Table.BordersInner] = TableBordersInner.value,
+                })
+                for i = 1, TableNumRows:get() do
+                    for i2 = 1, 4 do
+                        Iris.NextColumn()
+                        if TableUseButtons.value then
+                            Iris.Button({ `Month: {i}, Week: {i2}` })
+                        else
+                            Iris.Text({ `Month: {i}, Week: {i2}` })
+                        end
+                    end
+                end
+                Iris.End()
+
+                Iris.Checkbox({ "RowBg" }, { isChecked = TableRowBg })
+                Iris.Checkbox({ "BordersOuter" }, { isChecked = TableBordersOuter })
+                Iris.Checkbox({ "BordersInner" }, { isChecked = TableBordersInner })
+                Iris.SameLine()
+                Iris.RadioButton({ "Buttons", true }, { index = TableUseButtons })
+                Iris.RadioButton({ "Text", false }, { index = TableUseButtons })
+                Iris.End()
+                Iris.InputNum({
+                    "Number of rows",
+                    [Iris.Args.InputNum.Min] = 0,
+                    [Iris.Args.InputNum.Max] = 100,
+                    [Iris.Args.InputNum.Format] = "%d",
+                }, { number = TableNumRows })
+
+                Iris.End()  -- end of tree
             Iris.End()
         end
     end
