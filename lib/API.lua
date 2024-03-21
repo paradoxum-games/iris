@@ -1799,8 +1799,68 @@ return function(Iris: Types.Iris)
     Iris.Table = wrapper("Table")
 
     --[=[
-        @within Table
+        @class EditableTable
+        Table Widget API
+    ]=]
+
+    --[=[
+        @prop Table Iris.EditableTable
+        @within EditableTable
+        @tag Widget
+        @tag HasState
+        
+        A layout widget which allows children to be displayed in configurable columns and rows.
+        
+        ```lua
+        hasChildren = false
+        hasState = true
+        Arguments = {
+
+        }
+        Events = {
+            hovered: () -> boolean
+        }
+        States = {
+            index: State<any>,
+            isOpened: State<boolean>?
+        }
+        ```
+    ]=]
+    Iris.EditableTable = wrapper("EditableTable")
+
+    --[=[
+        @class EditableTable
+        Table Widget API
+    ]=]
+
+    --[=[
+        @prop Table Iris.EditableTable
+        @within EditableTable
+        @tag Widget
+        @tag HasState
+        
+        A layout widget which allows children to be displayed in configurable columns and rows.
+        
+        ```lua
+        hasChildren = false
+        hasState = true
+        Arguments = {
+
+        }
+        Events = {
+            hovered: () -> boolean
+        }
+        States = {
+            index: State<any>,
+            isOpened: State<boolean>?
+        }
+        ```
+    ]=]
+    Iris.EditableTable = wrapper("EditableTable")
+
+    --[=[
         @function NextColumn
+        @within Table
         
         In a table, moves to the next available cell. if the current cell is in the last column,
         then the next cell will be the first column of the next row.
