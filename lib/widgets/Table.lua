@@ -197,9 +197,11 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             local state = thisWidget.state.table:get() or {}
 
             local existing = {} :: { [string]: any }
+
+            local descendantsByPath = {}
             local descendants = getTableDescendants(state)
 
-            for _, child: Types.Widget in thisWidget.Instance:GetChildren() do
+            for _, child in thisWidget.Instance:GetChildren() do
                 if child:IsA("Frame") or child:IsA("TextButton") then
                     existing[child.Name] = child
                 end
@@ -277,6 +279,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                     key.Text = convertFromValue(entry.key)
                 end
 
+                descendantsByPath[entry.path] = frame
                 frame.LayoutOrder = index
 
                 if entry.parent then
@@ -298,6 +301,12 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
                 if input then
                     input.Text = convertFromValue(entry.value)
+                end
+            end
+
+            for path, child in existing do
+                if not descendantsByPath[path] then
+                    child:Destroy()
                 end
             end
         end
