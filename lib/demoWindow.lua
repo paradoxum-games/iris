@@ -32,6 +32,29 @@ return function(Iris: Types.Iris)
 
     -- shows each widgets functionality
     local widgetDemos = {
+        EditableTable = function()
+            Iris.Tree({ "EditableTable" })
+
+            local state = Iris.State({
+                Test1 = 1,
+                Test2 = "2",
+                Test3 = {},
+                Test4 = true,
+            })
+
+            state:onChange(function(value)
+                print("updated", value)
+            end)
+
+            print(state.value)
+
+            Iris.EditableTable({}, {
+                table = state,
+            })
+
+            Iris.End()
+        end,
+
         Basic = function()
             Iris.Tree({ "Basic" })
             do
@@ -577,7 +600,8 @@ return function(Iris: Types.Iris)
             Iris.End()
         end,
     }
-    local widgetDemosOrder = { "Basic", "Image", "Selectable", "Combo", "Tree", "CollapsingHeader", "Group", "Tab", "Indent", "Input", "MultiInput", "InputText", "Tooltip", "Plotting" }
+    -- local widgetDemosOrder = { "EditableTable",  "Basic", "Image", "Selectable", "Combo", "Tree", "CollapsingHeader", "Group", "Tab", "Indent", "Input", "MultiInput", "InputText", "Tooltip", "Plotting" }
+    local widgetDemosOrder = { "EditableTable" }
 
     local function recursiveTree()
         local theTree = Iris.Tree({ "Recursive Tree" })
