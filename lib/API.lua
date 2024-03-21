@@ -1582,6 +1582,36 @@ return function(Iris: Types.Iris)
     Iris.Table = wrapper("Table")
 
     --[=[
+        @class EditableTable
+        Table Widget API
+    ]=]
+
+    --[=[
+        @prop Table Iris.EditableTable
+        @within EditableTable
+        @tag Widget
+        @tag HasState
+        
+        A layout widget which allows children to be displayed in configurable columns and rows.
+        
+        ```lua
+        hasChildren = false
+        hasState = true
+        Arguments = {
+
+        }
+        Events = {
+            hovered: () -> boolean
+        }
+        States = {
+            index: State<any>,
+            isOpened: State<boolean>?
+        }
+        ```
+    ]=]
+    Iris.EditableTable = wrapper("EditableTable")
+
+    --[=[
         @function NextColumn
         @within Table
         

@@ -10,6 +10,203 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
         end
     end)
 
+    local function convertToValue(value: string)
+        if value == "true" then
+            return true
+        elseif value == "false" then
+            return false
+        elseif tonumber(value) then
+            return tonumber(value)
+        elseif value:gsub("%s", "") == "" then
+            return nil
+        else
+            return value
+        end
+    end
+
+    local function convertFromValue(value: any)
+        if value == nil then
+            return ""
+        else
+            return tostring(value)
+        end
+    end
+
+    --stylua: ignore
+    Iris.WidgetConstructor("EditableTable", {
+        hasState = true,
+        hasChildren = false,
+
+        Args = {
+            ["Table"] = 1,
+        },
+        
+        Events = {
+            ["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+                return thisWidget.Instance
+            end),  
+        },
+        Generate = function(thisWidget: Types.Widget)
+            tableWidgets[thisWidget.ID] = thisWidget
+
+            local Table: Frame = Instance.new("Frame")
+            Table.Name = "Iris_EditableTable"
+            Table.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
+            Table.AutomaticSize = Enum.AutomaticSize.Y
+            Table.BackgroundTransparency = 1
+            Table.BorderSizePixel = 0
+            Table.ZIndex = thisWidget.ZIndex + 1024 -- allocate room for 1024 cells, because Table UIStroke has to appear above cell UIStroke
+            Table.LayoutOrder = thisWidget.ZIndex
+            Table.ClipsDescendants = true
+
+            widgets.UIListLayout(Table, Enum.FillDirection.Vertical, UDim.new(0, 0))
+            widgets.UIStroke(Table, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+
+            return Table
+        end,
+        Update = function(thisWidget: Types.Widget)
+            
+        end,
+        Discard = function(thisWidget: Types.Widget)
+            tableWidgets[thisWidget.ID] = nil
+            thisWidget.Instance:Destroy()
+        end,
+        GenerateState = function(thisWidget: Types.Widget)
+            if thisWidget.state.table == nil then
+                thisWidget.state.table = Iris._widgetState(thisWidget, "table", {})
+            end
+        end,
+        UpdateState = function(thisWidget: Types.Widget)
+
+            local refreshState
+
+            refreshState = function()
+                local existing = {}
+                local currentTable = thisWidget.state.table:get() or {}
+    
+                for _, child: Types.Widget in thisWidget.Instance:GetChildren() do
+                    if child:IsA("Frame") then
+                        if currentTable[child.Name] == nil then
+                            child:Destroy()
+                        else
+                            existing[child.Name] = child
+                        end
+                    end
+                end
+    
+                local index = 1
+                for name, obj in currentTable do
+                    local frame: Frame
+                    local input: TextBox
+
+                    -- local canExpand = type(obj) == "table"
+
+    
+                    if existing[name] ~= nil then
+                        frame = existing[name]
+                        frame.LayoutOrder = index
+                        input = frame.Value
+                    else
+                        local newObject = Instance.new("Frame")
+                        newObject.Name = name
+                        newObject.Size = UDim2.new(1, 0, 0, 0)
+                        newObject.AutomaticSize = Enum.AutomaticSize.Y
+                        newObject.BackgroundTransparency = 1
+                        newObject.BorderSizePixel = 0
+                        newObject.ZIndex = thisWidget.ZIndex + 1
+                        newObject.LayoutOrder = index
+    
+                        widgets.UIListLayout(newObject, Enum.FillDirection.Horizontal, UDim.new(0, 0))
+                        widgets.UIStroke(newObject, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+    
+                        local nameInput = Instance.new("TextBox")
+                        nameInput.Name = "Name"
+                        nameInput.Size = UDim2.new(0.5, 0, 0, 0)
+                        nameInput.AutomaticSize = Enum.AutomaticSize.Y
+                        nameInput.BackgroundColor3 = Iris._config.FrameBgColor
+                        nameInput.BackgroundTransparency = Iris._config.FrameBgTransparency
+                        nameInput.BorderSizePixel = 0
+                        nameInput.ZIndex = thisWidget.ZIndex + 2
+                        nameInput.LayoutOrder = 2
+                        nameInput.ClipsDescendants = true
+                        nameInput.Text = tostring(name)
+                        nameInput.Parent = newObject
+    
+                        local seperator = Instance.new("Frame")
+                        seperator.Name = "Seperator"
+                        seperator.Size = UDim2.new(0, 1, 2, 0)
+                        seperator.Position = UDim2.new(1, 1, 0.5, 0)
+                        seperator.AnchorPoint = Vector2.new(0, 0.5)
+                        seperator.BackgroundColor3 = Iris._config.SeparatorColor
+                        seperator.BackgroundTransparency = Iris._config.SeparatorTransparency
+                        seperator.BorderSizePixel = 0
+                        seperator.ZIndex = thisWidget.ZIndex + 2
+                        seperator.LayoutOrder = 1
+                        seperator.Parent = nameInput
+    
+                        local valueInput = Instance.new("TextBox")
+                        valueInput.Name = "Value"
+                        valueInput.Size = UDim2.new(0.5, 0, 0, 0)
+                        valueInput.AutomaticSize = Enum.AutomaticSize.Y
+                        valueInput.BackgroundColor3 = Iris._config.FrameBgColor
+                        valueInput.BackgroundTransparency = Iris._config.FrameBgTransparency
+                        valueInput.BorderSizePixel = 0
+                        valueInput.ZIndex = thisWidget.ZIndex + 2
+                        valueInput.LayoutOrder = 2
+                        valueInput.ClipsDescendants = true
+                        valueInput.Parent = newObject
+    
+                        nameInput.FocusLost:Connect(function()
+                            local tableValue = thisWidget.state.table:get()
+                            local value = convertToValue(nameInput.Text)
+    
+                            if value == nil then
+                                tableValue[newObject.Name] = nil
+                            else
+                                local current = tableValue[newObject.Name]
+                                tableValue[newObject.Name] = nil
+                                tableValue[value] = current
+                                newObject.Name = value
+                            end
+    
+                            thisWidget.state.table:set(tableValue)
+                            refreshState()
+                        end)
+    
+                        valueInput.FocusLost:Connect(function()
+                            local value = convertToValue(valueInput.Text)
+                            local tableValue = thisWidget.state.table:get()
+
+                            tableValue[newObject.Name] = value
+                            thisWidget.state.table:set(tableValue)
+
+                            refreshState()
+                        end)
+    
+                        widgets.applyTextStyle(nameInput)
+                        widgets.applyTextStyle(valueInput)
+    
+                        widgets.applyFrameStyle(nameInput)
+                        widgets.applyFrameStyle(valueInput)
+    
+                        widgets.UISizeConstraint(nameInput, Vector2.new(1, 0))
+                        widgets.UISizeConstraint(valueInput, Vector2.new(1, 0))
+    
+                        newObject.Parent = thisWidget.Instance
+    
+                        input = valueInput
+                        frame = newObject
+                    end
+    
+                    frame.BackgroundTransparency = if index % 2 == 0 then Iris._config.TableRowBgAltTransparency else Iris._config.TableRowBgTransparency
+                    input.Text = convertFromValue(obj)
+                end
+            end
+
+            refreshState()
+        end,
+    } :: Types.WidgetClass )
+
     --stylua: ignore
     Iris.WidgetConstructor("Table", {
         hasState = false,
