@@ -14,6 +14,15 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
     -- Editable Table Widget
     do
+        type TableChild = {
+            key: string,
+            depth: number,
+            parent: any?,
+            path: string,
+            rawPath: string,
+            value: any,
+        }
+
         local function convertToValue(value: string)
             if value == "true" then
                 return true
@@ -159,7 +168,6 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             return entry, key, value
         end
 
-        type TableChild = { key: string, depth: number, parent: any?, value: any }
         local function getTableDescendants(tbl: { [number | string]: any }, parent: TableChild?)
             local nodes = {} :: { TableChild }
             local entries = {} :: { { key: string, value: any } }
@@ -181,9 +189,11 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                     value = value,
                     depth = parent and parent.depth + 1 or 0,
                     path = parent and `{parent.path}\1{key}` or key,
+                    rawPath = parent and table.clone(parent.rawPath) or {},
                     parent = parent,
                 } :: TableChild
 
+                table.insert(node.rawPath, key)
                 table.insert(nodes, node)
 
                 if type(value) == "table" then
@@ -219,8 +229,8 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 local entryPadding = 4 + (entry.depth * 16)
                 local existingChild = existing[entry.path]
 
-                local isExpanded = not entry.parent or (expanded[entry.parent.path] and existing[entry.parent.path].Visible)
                 local isTable = entryType == "table"
+                local isExpanded = not entry.parent or (expanded[entry.parent.path] and existing[entry.parent.path].Visible)
 
                 if existingChild then
                     if isTable then
@@ -250,8 +260,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                             expanded[entry.path] = didExpand
                             frame.Arrow.Image = if didExpand then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
 
-                            thisWidget.state.expanded:set(expanded)
-                            refreshTableState(thisWidget)
+                            thisWidget.state.expanded:set(expanded, true)
                         end)
                     else
                         frame, key, input = createInputEntry(thisWidget, entry.path)
@@ -263,13 +272,25 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                                 input.Text = convertFromValue(entry.value)
                                 return
                             else
-                                entry.parent.value[entry.key] = value
+                                local path = table.clone(entry.rawPath)
+                                local node = state
+
+                                if #path > 1 then
+                                    while #path > 1 do
+                                        node = node[table.remove(path, 1)]
+                                    end
+
+                                    node[path[1]] = value
+                                elseif #path == 1 then
+                                    state[path[1]] = value
+                                else
+                                    input.Text = convertFromValue(entry.value)
+                                    return
+                                end
                             end
 
-                            thisWidget.state.table:set(state)
                             thisWidget.lastTableChangedTick = Iris._cycleTick + 1
-
-                            refreshTableState(thisWidget)
+                            thisWidget.state.table:set(state, true)
                         end)
                     end
 
