@@ -230,7 +230,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 local existingChild = existing[entry.path]
 
                 local isTable = entryType == "table"
-                local isExpanded = not entry.parent or (expanded[entry.parent.path] and existing[entry.parent.path].Visible)
+                local isExpanded = not entry.parent or (expanded[entry.parent.path] and existing[entry.parent.path] and existing[entry.parent.path].Visible)
 
                 if existingChild then
                     if isTable then
