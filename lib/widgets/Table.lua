@@ -241,13 +241,13 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
                     if isTable then
                         frame, key = createTableEntry(thisWidget, entry.path)
-                        frame.Arrow.Image = if expanded[frame.Name] then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
+                        frame.Arrow.Image = if expanded[entry.path] then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
 
                         frame.MouseButton1Click:Connect(function()
                             local expanded = thisWidget.state.expanded:get() or {}
-                            local didExpand = not expanded[frame.Name]
+                            local didExpand = not expanded[entry.path]
 
-                            expanded[frame.Name] = didExpand
+                            expanded[entry.path] = didExpand
                             frame.Arrow.Image = if didExpand then widgets.ICONS.DOWN_POINTING_TRIANGLE else widgets.ICONS.RIGHT_POINTING_TRIANGLE
 
                             thisWidget.state.expanded:set(expanded)
@@ -263,14 +263,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                                 input.Text = convertFromValue(entry.value)
                                 return
                             else
-                                local path = string.split(frame.Name, "\1")
-                                local current = state
-
-                                for i = 1, #path - 1 do
-                                    current = current[path[i]]
-                                end
-
-                                current[path[#path]] = value
+                                entry.parent.value[entry.key] = value
                             end
 
                             thisWidget.state.table:set(state)
