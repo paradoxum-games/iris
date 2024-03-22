@@ -404,6 +404,8 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             end
             Window.Name = "Iris_Window"
 
+            local TitleButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
+
             local WindowButton: TextButton = Instance.new("TextButton")
             WindowButton.Name = "WindowButton"
             WindowButton.Size = UDim2.fromOffset(0, 0)
@@ -453,8 +455,10 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 
             local ChildContainer: ScrollingFrame = Instance.new("ScrollingFrame")
-            ChildContainer.Name = "WindowContainer"
-            ChildContainer.Size = UDim2.fromScale(1, 1)
+            ChildContainer.Name = "ChildContainer"
+            ChildContainer.AutomaticSize = Enum.AutomaticSize.None
+            ChildContainer.Size = UDim2.new(1, 0, 1, -TitleButtonSize)
+            ChildContainer.Position = UDim2.fromOffset(0, 0)
             ChildContainer.BackgroundColor3 = Iris._config.WindowBgColor
             ChildContainer.BackgroundTransparency = Iris._config.WindowBgTransparency
             ChildContainer.BorderSizePixel = 0
@@ -525,7 +529,6 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 end
             end)
 
-            local TitleButtonSize: number = Iris._config.TextSize + ((Iris._config.FramePadding.Y - 1) * 2)
 
             local CollapseButton: TextButton = Instance.new("TextButton")
             CollapseButton.Name = "CollapseButton"
