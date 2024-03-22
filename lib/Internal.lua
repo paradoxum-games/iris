@@ -138,8 +138,8 @@ return function(Iris: Types.Iris): Types.Internal
         
         Allows the caller to assign the state object a new value, and returns the new value.
     ]=]
-    function StateClass:set<T>(newValue: T): T
-        if newValue == self.value then
+    function StateClass:set<T>(newValue: T, force: boolean?): T
+        if newValue == self.value and force ~= true then
             -- no need to update on no change.
             return self.value
         end
