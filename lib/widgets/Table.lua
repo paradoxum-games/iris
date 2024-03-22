@@ -80,6 +80,8 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             widgets.UISizeConstraint(arrow, Vector2.new(1, 0))
             widgets.UISizeConstraint(key, Vector2.new(1, 0))
 
+            widgets.UIStroke(entry, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
+
             widgets.applyTextStyle(key)
 
             widgets.applyFrameStyle(key)
