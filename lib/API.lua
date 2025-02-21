@@ -1764,6 +1764,37 @@ return function(Iris: Types.Iris)
     ]=]
     Iris.PlotHistogram = wrapper("PlotHistogram")
 
+    --[=[
+        @within Plot
+        @prop PlotHistogram Iris.PlotTimeGraph
+        @tag Widget
+        @tag HasState
+
+        A hisogram graph for showing values. Includes hovering to see a specific block on the graph,
+        and automatic scaling. Has an overlay text option at the top of the plot for displaying any
+        information. Also supports a baseline option, which determines where the blocks start from.
+
+        ```lua
+        hasChildren = false
+        hasState = true
+        Arguments = {
+            Height: number? = 0,
+            Min: number? = min, -- Iris will use the minimum value from the values
+            Max: number? = max, -- Iris will use the maximum value from the values
+            TextOverlay: string? = "",
+            BaseLine: number? = 0 -- by default, blocks swap side at 0
+        }
+        Events = {
+            hovered: () -> boolean
+        }
+        States = {
+            values: State<{number}>?,
+            hovered: State<{number}>? -- read-only property
+        }
+        ```
+    ]=]
+    Iris.PlotTimeGraph = wrapper("PlotTimeGraph")
+
     --[[
         ----------------------------------
             [SECTION] Table Widget API

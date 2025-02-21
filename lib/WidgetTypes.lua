@@ -484,6 +484,18 @@ export type PlotHistogram = Widget & {
     },
 } & Hovered
 
+export type PlotTimeGraph = Widget & {
+    arguments: {
+        Name: string?,
+        ValueNames: { string }?,
+    },
+
+    state: {
+        values: State<{ number }>,
+        hovered: State<number?>,
+    },
+} & Changed & Hovered
+
 export type Table = ParentWidget & {
     RowColumnIndex: number,
     InitialNumColumns: number,

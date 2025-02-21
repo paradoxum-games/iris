@@ -645,4 +645,279 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             widgets.discardState(thisWidget)            
         end,
     } :: Types.WidgetClass)
+
+    -- PlotTimeGraph Widget
+    -- get color for each bar
+    local function getBarColor(index: number): Color3
+        local hue: number = (0.15 * (index - 1)) % 1
+        return Color3.fromHSV(hue % 1, 1, 1)
+    end
+
+    -- convert 1 to 1.3s, 0.5 to 500ms, ns, us etc
+    local function convertDuration(value: number): string
+        local s = math.sign(value)
+        value = math.abs(value)
+        local prefixes = {
+            [4] = "T",
+            [3] = "G",
+            [2] = "M",
+            [1] = "k",
+            [0] = " ",
+            [-1] = "m",
+            [-2] = "u",
+            [-3] = "n",
+            [-4] = "p",
+        }
+
+        local order = 0
+
+        while value >= 1000 do
+            order += 1
+            value /= 1000
+        end
+
+        while value ~= 0 and value < 1 do
+            order -= 1
+            value *= 1000
+        end
+
+        if value >= 100 then
+            value = math.floor(value)
+        elseif value >= 10 then
+            value = math.floor(value * 1e1) / 1e1
+        elseif value >= 1 then
+            value = math.floor(value * 1e2) / 1e2
+        end
+
+        return value * s .. prefixes[order] .. "s"
+    end
+
+    -- generate legend frames
+    local function generateLegendFrame(name: string, index: number): Frame
+        local Frame: Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 0, Iris._config.FramePadding.Y * 2 + Iris._config.TextSize)
+        Frame.BackgroundTransparency = 1
+        Frame.BorderSizePixel = 0
+        Frame.Name = tostring(index)
+        Frame.LayoutOrder = index
+
+        local Container: Frame = Instance.new("Frame")
+        Container.Name = "Container"
+        Container.Size = UDim2.new(1, 0, 0, Iris._config.FramePadding.Y * 2 + Iris._config.TextSize)
+        Container.BackgroundTransparency = 1
+        Container.BorderSizePixel = 0
+
+        widgets.UIListLayout(Container, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+
+        local ColorCode = Instance.new("Frame")
+        ColorCode.Name = "ColorCode"
+        ColorCode.Size = UDim2.new(1, -2, 1, -2)
+        ColorCode.SizeConstraint = Enum.SizeConstraint.RelativeYY
+        ColorCode.BorderSizePixel = 0
+        widgets.applyFrameStyle(ColorCode, true)
+        ColorCode.BackgroundColor3 = getBarColor(index)
+        ColorCode.Parent = Container
+
+        local TextLabel: TextLabel = Instance.new("TextLabel")
+        TextLabel.Name = "LegendName"
+        TextLabel.Text = name
+        TextLabel.Size = UDim2.fromScale(0, 1)
+        TextLabel.BackgroundTransparency = 1
+        TextLabel.BorderSizePixel = 0
+
+        local Flex = Instance.new("UIFlexItem")
+        Flex.FlexMode = Enum.UIFlexMode.Grow
+        widgets.applyTextStyle(TextLabel)
+
+        Flex.Parent = TextLabel
+        TextLabel.Parent = Container
+
+        local Duration: TextLabel = Instance.new("TextLabel")
+        Duration.Name = "Duration"
+        Duration.Text = "0ms"
+        Duration.Size = UDim2.fromScale(0, 1)
+        Duration.AutomaticSize = Enum.AutomaticSize.X
+        Duration.BackgroundTransparency = 1
+        Duration.BorderSizePixel = 0
+        widgets.applyTextStyle(Duration)
+        Duration.TextColor3 = Iris._config.TextDisabledColor
+        Duration.Parent = Container
+
+        local Bar: Frame = Instance.new("Frame")
+        Bar.Name = "Bar"
+        Bar.Size = UDim2.new(1, 0, 0, 1)
+        Bar.Position = UDim2.fromScale(0, 1)
+        Bar.BackgroundTransparency = 0
+        Bar.BorderSizePixel = 0
+        widgets.applyFrameStyle(Bar, true)
+        Bar.BackgroundColor3 = Color3.new(1, 1, 1)
+
+        Container.Parent = Frame
+        Bar.Parent = Frame
+
+        return Frame
+    end
+
+    -- stylua: ignore
+    Iris.WidgetConstructor("PlotTimeGraph", {
+        hasState = true,
+        hasChildren = false,
+        Args = {
+			["Name"] = 1,
+            ["ValueNames"] = 2,
+        },
+        Events = {
+            ["hovered"] = widgets.EVENTS.hover(function(thisWidget: Types.Widget)
+                return thisWidget.Instance
+            end),
+        },
+        Generate = function(thisWidget: Types.PlotTimeGraph)
+            local ProgressBar: Frame = Instance.new("Frame")
+            ProgressBar.Name = "Iris_StackedGraph"
+            ProgressBar.Size = UDim2.new(Iris._config.ItemWidth, UDim.new())
+            ProgressBar.BackgroundTransparency = 1
+            ProgressBar.AutomaticSize = Enum.AutomaticSize.Y
+            ProgressBar.LayoutOrder = thisWidget.ZIndex
+            local UIListLayout: UIListLayout = widgets.UIListLayout(ProgressBar, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemInnerSpacing.Y))
+            UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+            local Graph: Frame = Instance.new("Frame")
+            Graph.Name = "Graph"
+            Graph.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
+			Graph.AutomaticSize = Enum.AutomaticSize.Y
+            Graph.BackgroundTransparency = 1
+            Graph.BorderSizePixel = 0
+			local GraphLayout: UIListLayout = widgets.UIListLayout(Graph, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+			GraphLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			widgets.applyFrameStyle(Graph, true)
+
+			local Height = Iris._config.FramePadding.Y * 2 + Iris._config.TextSize
+            local Bar: Frame = Instance.new("Frame")
+            Bar.Name = "Bar"
+            Bar.Size = UDim2.new(UDim.new(1, 0), UDim.new(0, Height))
+			Bar.BackgroundColor3 = Iris._config.FrameBgColor
+            Bar.BackgroundTransparency = Iris._config.FrameBgTransparency
+            Bar.BorderSizePixel = 0
+			local Layout: UIListLayout = widgets.UIListLayout(Bar, Enum.FillDirection.Horizontal, UDim.new(0, Iris._config.ItemInnerSpacing.X))
+			Layout.Padding = UDim.new(0, 0)
+			widgets.applyFrameStyle(Bar, true)
+            widgets.UIPadding(Bar, Iris._config.FramePadding)
+            widgets.UICorner(Bar, Iris._config.FrameRounding)
+
+			local Legend: Frame = Instance.new("Frame")
+            Legend.Name = "Legend"
+            Legend.Size = UDim2.new(Iris._config.ContentWidth, UDim.new(0, 0))
+			Legend.AutomaticSize = Enum.AutomaticSize.Y
+            Legend.BackgroundTransparency = 1
+            Legend.BorderSizePixel = 0
+			Legend.LayoutOrder = 3
+			widgets.UIListLayout(Legend, Enum.FillDirection.Vertical, UDim.new(0, Iris._config.ItemInnerSpacing.X + 1))
+			widgets.applyFrameStyle(Legend, true)
+            widgets.UIPadding(Legend, Iris._config.FramePadding)
+            widgets.UICorner(Legend, Iris._config.FrameRounding)
+
+            local TextLabel: TextLabel = Instance.new("TextLabel")
+            TextLabel.Name = "TextLabel"
+            TextLabel.AutomaticSize = Enum.AutomaticSize.XY
+            TextLabel.AnchorPoint = Vector2.new(0, 0.5)
+            TextLabel.BackgroundTransparency = 1
+            TextLabel.BorderSizePixel = 0
+            TextLabel.LayoutOrder = 1
+            widgets.applyTextStyle(TextLabel)
+            TextLabel.Parent = Graph
+
+            local RunTime: TextLabel = Instance.new("TextLabel")
+			RunTime.Name = "RunTime"
+            RunTime.Text = "Run Time: 0ms"
+            RunTime.AutomaticSize = Enum.AutomaticSize.XY
+            RunTime.AnchorPoint = Vector2.new(0, 0.5)
+            RunTime.BackgroundTransparency = 1
+            RunTime.BorderSizePixel = 0
+            RunTime.LayoutOrder = 2
+            widgets.applyTextStyle(RunTime)
+			RunTime.TextColor3 = Iris._config.TextDisabledColor
+            RunTime.Parent = ProgressBar
+
+            Bar.Parent = Graph
+			Legend.Parent = ProgressBar
+            Graph.Parent = ProgressBar
+
+
+            return ProgressBar
+        end,
+        GenerateState = function(thisWidget: Types.PlotTimeGraph)
+            if thisWidget.state.values == nil then
+                thisWidget.state.values = Iris._widgetState(thisWidget, "Values", {})
+            end
+        end,
+        Update = function(thisWidget: Types.PlotTimeGraph)
+            local Progress = thisWidget.Instance :: Frame
+            local TextLabel: TextLabel = Progress.Graph.TextLabel :: TextLabel
+
+            TextLabel.Text = thisWidget.arguments.Name or "Time Graph"
+        end,
+        UpdateState = function(thisWidget: Types.PlotTimeGraph)
+            local ProgressBar = thisWidget.Instance :: Frame
+            local Bar = ProgressBar.Graph.Bar :: Frame
+			local RunTime = ProgressBar.RunTime :: TextLabel
+			local Legend = ProgressBar.Legend :: Frame
+
+			local names: {string} = thisWidget.arguments.ValueNames or {}
+            local values: {number} = thisWidget.state.values.value
+
+			local sum = 0
+
+			for _, value in ipairs(values) do
+				sum += value
+			end
+
+			RunTime.Text = `Run Time: {convertDuration(sum)}`
+
+			for i, value in ipairs(values) do
+				local barValue = Bar:FindFirstChild(tostring(i)) :: Frame
+				local legendValue = Legend:FindFirstChild(tostring(i)) :: Frame
+
+				local name = names[i] or `Value {i}`
+				local color = getBarColor(i)
+				local duration = convertDuration(value)
+
+				if not barValue then
+					barValue = Instance.new("Frame")
+					barValue.Name = tostring(i)
+					barValue.BackgroundTransparency = Iris._config.PlotHistogramTransparency
+					barValue.BorderSizePixel = 0
+					barValue.Parent = Bar
+				end
+
+				if not legendValue then
+					legendValue = generateLegendFrame(name, i)
+					legendValue.Parent = Legend
+				end
+
+				if legendValue.Container.ColorCode.BackgroundColor3 ~= color then
+					legendValue.Container.ColorCode.ColorCode.BackgroundColor3 = color
+				end
+
+				if legendValue.Container.LegendName.Text ~= name then
+					legendValue.Container.LegendName.Text = name
+				end
+
+				if barValue.BackgroundColor3 ~= color then
+					barValue.BackgroundColor3 = color
+				end
+
+				barValue.Size = UDim2.fromScale(value / sum, 1)
+				barValue.LayoutOrder = -math.round(value * 1000)
+
+				legendValue.Container.Duration.Text = duration
+				legendValue.Bar.Size = UDim2.new(value / sum, 0, 0, 1)
+			end
+
+            thisWidget.lastChangedTick = Iris._cycleTick + 1
+        end,
+        Discard = function(thisWidget: Types.PlotTimeGraph)
+            thisWidget.Instance:Destroy()
+            widgets.discardState(thisWidget)
+        end,
+    } :: Types.WidgetClass)
 end

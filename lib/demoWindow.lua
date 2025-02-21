@@ -611,6 +611,42 @@ return function(Iris: Types.Iris)
 
                     Iris.PlotHistogram({ "Histogram", 100, 0, 1, "random" }, { values = ValueState })
                     Iris.PlotLines({ "Lines", 100, 0, 1, "random" }, { values = ValueState })
+
+                    local rng = Random.new()
+                    local timeNames = { "SystemA", "SystemB", "SystemC", "SystemD", "SystemE", "SystemF", "SystemG", "SystemH", "SystemI", "SystemJ" }
+                    local timeValues = Iris.State({
+                        rng:NextNumber(0.3, 0.6),
+                        rng:NextNumber(0.1, 0.2),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                        rng:NextNumber(0.05, 0.1),
+                    })
+
+                    if tick() % 0.1 < 0.01 then
+                        timeValues:set({
+                            rng:NextNumber(0.3, 0.6),
+                            rng:NextNumber(0.1, 0.2),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                            rng:NextNumber(0.05, 0.1),
+                        })
+                    end
+
+                    Iris.SeparatorText({ "Time Graph" })
+
+                    Iris.PlotTimeGraph({ "Graph", timeNames }, { values = timeValues })
+
+                    Iris.SeparatorText({ "Other Graphs" })
                 end
 
                 do
