@@ -862,8 +862,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 			local RunTime = ProgressBar.RunTime :: TextLabel
 			local Legend = ProgressBar.Legend :: Frame
 
-			local names: {string} = thisWidget.arguments.ValueNames or {}
-            local values: {number} = thisWidget.state.values.value
+            local values: {{name: string, value: number}} = thisWidget.state.values.value
 
 			local sum = 0
 
@@ -873,11 +872,13 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
 			RunTime.Text = `Run Time: {convertDuration(sum)}`
 
-			for i, value in ipairs(values) do
+			for i, data in ipairs(values) do
 				local barValue = Bar:FindFirstChild(tostring(i)) :: Frame
 				local legendValue = Legend:FindFirstChild(tostring(i)) :: Frame
 
-				local name = names[i] or `Value {i}`
+				local name = data.name
+				local value = data.value
+
 				local color = getBarColor(i)
 				local duration = convertDuration(value)
 

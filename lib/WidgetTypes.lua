@@ -487,11 +487,10 @@ export type PlotHistogram = Widget & {
 export type PlotTimeGraph = Widget & {
     arguments: {
         Name: string?,
-        ValueNames: { string }?,
     },
 
     state: {
-        values: State<{ number }>,
+        values: State<{ name: string, value: number }>,
         hovered: State<number?>,
     },
 } & Changed & Hovered
