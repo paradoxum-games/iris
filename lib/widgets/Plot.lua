@@ -914,6 +914,25 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 				legendValue.Bar.Size = UDim2.new(value / sum, 0, 0, 1)
 			end
 
+			local check = true
+			local i = #values + 1
+
+			while check do
+				local barValue = Bar:FindFirstChild(tostring(i)) :: Frame
+				local legendValue = Legend:FindFirstChild(tostring(i)) :: Frame
+
+				if barValue then
+					barValue:Destroy()
+				end
+
+				if legendValue then
+					legendValue:Destroy()
+				end
+
+				check = barValue or legendValue
+				i += 1
+			end
+
             thisWidget.lastChangedTick = Iris._cycleTick + 1
         end,
         Discard = function(thisWidget: Types.PlotTimeGraph)
