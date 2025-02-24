@@ -613,38 +613,37 @@ return function(Iris: Types.Iris)
                     Iris.PlotLines({ "Lines", 100, 0, 1, "random" }, { values = ValueState })
 
                     local rng = Random.new()
-                    local timeNames = { "SystemA", "SystemB", "SystemC", "SystemD", "SystemE", "SystemF", "SystemG", "SystemH", "SystemI", "SystemJ" }
                     local timeValues = Iris.State({
-                        rng:NextNumber(0.3, 0.6),
-                        rng:NextNumber(0.1, 0.2),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
-                        rng:NextNumber(0.05, 0.1),
+                        { name = "SystemA", value = rng:NextNumber(0.3, 0.6) },
+                        { name = "SystemB", value = rng:NextNumber(0.1, 0.2) },
+                        { name = "SystemC", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemD", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemE", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemF", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemG", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemH", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemI", value = rng:NextNumber(0.05, 0.1) },
+                        { name = "SystemJ", value = rng:NextNumber(0.05, 0.1) },
                     })
 
                     if tick() % 0.1 < 0.01 then
                         timeValues:set({
-                            rng:NextNumber(0.3, 0.6),
-                            rng:NextNumber(0.1, 0.2),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
-                            rng:NextNumber(0.05, 0.1),
+                            { name = "SystemA", value = rng:NextNumber(0.3, 0.6) },
+                            { name = "SystemB", value = rng:NextNumber(0.1, 0.2) },
+                            { name = "SystemC", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemD", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemE", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemF", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemG", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemH", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemI", value = rng:NextNumber(0.05, 0.1) },
+                            { name = "SystemJ", value = rng:NextNumber(0.05, 0.1) },
                         })
                     end
 
                     Iris.SeparatorText({ "Time Graph" })
 
-                    Iris.PlotTimeGraph({ "Graph", timeNames }, { values = timeValues })
+                    Iris.PlotTimeGraph({ "Graph" }, { values = timeValues })
 
                     Iris.SeparatorText({ "Other Graphs" })
                 end

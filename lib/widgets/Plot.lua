@@ -866,8 +866,8 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
 			local sum = 0
 
-			for _, value in ipairs(values) do
-				sum += value
+			for _, data in ipairs(values) do
+				sum += data.value
 			end
 
 			RunTime.Text = `Run Time: {convertDuration(sum)}`
