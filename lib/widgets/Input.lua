@@ -1294,7 +1294,9 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             ["Text"] = 1,
             ["TextHint"] = 2,
             ["ReadOnly"] = 3,
-            ["MultiLine"] = 4,
+			["MultiLine"] = 4,
+			["Color"] = 5,
+			["PlaceholderColor"] = 6,
         },
         Events = {
             ["textChanged"] = {
@@ -1369,7 +1371,15 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             TextLabel.Text = thisWidget.arguments.Text or "Input Text"
             InputField.PlaceholderText = thisWidget.arguments.TextHint or ""
             InputField.TextEditable = not thisWidget.arguments.ReadOnly
-            InputField.MultiLine = thisWidget.arguments.MultiLine or false
+			InputField.MultiLine = thisWidget.arguments.MultiLine or false
+			
+			if thisWidget.arguments.Color then
+				InputField.TextColor3 = thisWidget.arguments.Color
+			end
+			
+			if thisWidget.arguments.PlaceholderColor then
+				InputField.PlaceholderColor3 = thisWidget.arguments.PlaceholderColor
+			end
         end,
         Discard = function(thisWidget: Types.InputText)
             thisWidget.Instance:Destroy()
