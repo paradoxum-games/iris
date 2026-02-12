@@ -553,8 +553,6 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 end), 
             },
             Generate = function(thisWidget: Types.Widget)
-                Tables[thisWidget.ID] = thisWidget
-    
                 local Table: Frame = Instance.new("Frame")
                 Table.Name = "Iris_EditableTable"
                 Table.Size = UDim2.new(Iris._config.ItemWidth, UDim.new(0, 0))
@@ -564,7 +562,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 Table.ZIndex = thisWidget.ZIndex + 1024 -- allocate room for 1024 cells, because Table UIStroke has to appear above cell UIStroke
                 Table.LayoutOrder = thisWidget.ZIndex
                 Table.ClipsDescendants = true
-    
+
                 widgets.UIListLayout(Table, Enum.FillDirection.Vertical, UDim.new(0, 0))
                 widgets.UIStroke(Table, 1, Iris._config.TableBorderStrongColor, Iris._config.TableBorderStrongTransparency)
     
@@ -573,7 +571,6 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             Update = function(thisWidget: Types.Widget)
             end,
             Discard = function(thisWidget: Types.Widget)
-                Tables[thisWidget.ID] = nil
                 thisWidget.Instance:Destroy()
             end,
             GenerateState = function(thisWidget: Types.Widget)
