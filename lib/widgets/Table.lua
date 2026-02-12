@@ -553,7 +553,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
                 end), 
             },
             Generate = function(thisWidget: Types.Widget)
-                tableWidgets[thisWidget.ID] = thisWidget
+                Tables[thisWidget.ID] = thisWidget
     
                 local Table: Frame = Instance.new("Frame")
                 Table.Name = "Iris_EditableTable"
@@ -573,7 +573,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             Update = function(thisWidget: Types.Widget)
             end,
             Discard = function(thisWidget: Types.Widget)
-                tableWidgets[thisWidget.ID] = nil
+                Tables[thisWidget.ID] = nil
                 thisWidget.Instance:Destroy()
             end,
             GenerateState = function(thisWidget: Types.Widget)
@@ -641,8 +641,6 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
             thisWidget.RowBorders = {}
             thisWidget.ColumnBorders = {}
             thisWidget.RowCycles = {}
-
-            print(Table)
 
             local callbackIndex: number = #Iris._postCycleCallbacks + 1
             local desiredCycleTick: number = Iris._cycleTick + 1
