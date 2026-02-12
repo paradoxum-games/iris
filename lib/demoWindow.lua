@@ -1346,11 +1346,12 @@ return function(Iris: Types.Iris)
             helpMarker("calling Iris.NextRow() in the outer loop, and Iris.NextColumn()in the inner loop")
             Iris.End()
             Iris.Table({ 3 })
-            for i = 1, 4 do
-                Iris.NextRow()
-                for i2 = 1, 3 do
-                    Iris.NextColumn()
-                    Iris.Text({ `Row: {i}, Column: {i2}` })
+            do
+                for i = 1, 4 do
+                    for i2 = 1, 3 do
+                        Iris.Text({ `Row: {i}, Column: {i2}` })
+                        Iris.NextColumn()
+                    end
                 end
             end
             Iris.End()
@@ -1368,8 +1369,8 @@ return function(Iris: Types.Iris)
             do
                 for i = 1, 4 do
                     for i2 = 1, 2 do
-                        Iris.NextColumn()
                         Iris.Text({ `Row: {i}, Column: {i2}` })
+                        Iris.NextColumn()
                     end
                 end
             end
@@ -1385,18 +1386,20 @@ return function(Iris: Types.Iris)
 
             Iris.Text({ "Table with Customizable Arguments" })
             Iris.Table({
-                4,
-                [Iris.Args.Table.RowBg] = TableRowBg.value,
-                [Iris.Args.Table.BordersOuter] = TableBordersOuter.value,
-                [Iris.Args.Table.BordersInner] = TableBordersInner.value,
+                [Iris.Args.Table.NumColumns] = 4,
+                [Iris.Args.Table.RowBackground] = TableRowBg.value,
+                [Iris.Args.Table.OuterBorders] = TableBordersOuter.value,
+                [Iris.Args.Table.InnerBorders] = TableBordersInner.value,
             })
-            for i = 1, TableNumRows:get() do
-                for i2 = 1, 4 do
-                    Iris.NextColumn()
-                    if TableUseButtons.value then
-                        Iris.Button({ `Month: {i}, Week: {i2}` })
-                    else
-                        Iris.Text({ `Month: {i}, Week: {i2}` })
+            do
+                for i = 1, TableNumRows:get() do
+                    for i2 = 1, 4 do
+                        if TableUseButtons.value then
+                            Iris.Button({ `Month: {i}, Week: {i2}` })
+                        else
+                            Iris.Text({ `Month: {i}, Week: {i2}` })
+                        end
+                        Iris.NextColumn()
                     end
                 end
             end
